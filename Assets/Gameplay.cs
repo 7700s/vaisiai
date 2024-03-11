@@ -107,16 +107,17 @@ public class Gameplay : MonoBehaviour
                 preview.GetComponent<Rigidbody2D>().gravityScale = 0f;
                 genFruit();
                 preview2 = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(3f, 4.5f, 0f), Quaternion.identity);
-                preview2.GetComponent<Transform>().localScale.Scale(new Vector3(0.25f,0.25f,0.25f));
+                preview2.GetComponent<Transform>().localScale.Scale(new Vector3(0.01f,0.01f,0.01f));
                 preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
                 return;
             }
             preview = preview2;
-            preview.GetComponent<Transform>().localScale.Scale(new Vector3(4f, 4f, 4f));
+            preview.GetComponent<Transform>().localScale = new Vector3(preview.GetComponent<Transform>().localScale.x*1f/0.75f, preview.GetComponent<Transform>().localScale.x * 1f / 0.75f, preview.GetComponent<Transform>().localScale.x * 1f / 0.75f);
             preview.GetComponent<Transform>().position = new Vector3(0, 3.0f, 0f);
 
             preview2 = Instantiate(objToDrop==1?id1:objToDrop==2?id2:id3, new Vector3(3,4.5f,0f), Quaternion.identity);
             preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
+            preview2.GetComponent<Transform>().localScale = new Vector3(preview2.GetComponent<Transform>().localScale.x*0.75f, preview2.GetComponent<Transform>().localScale.x * 0.75f, preview2.GetComponent<Transform>().localScale.x * 0.75f);
         }
 
         ShiftHues();
