@@ -14,13 +14,19 @@ public class Gameplay : MonoBehaviour
     public GameObject id7;
     private GameObject preview;
     private GameObject preview2;
+    public GameObject startScreen;
+    public GameObject scoreTitle;
+    public GameObject scoreResult;
+    public AudioSource gameOver;
     private int objToDrop;
     public int totalPriority = 0;
     private float cooldown = 0.7f;
     private float counter = 0.7f;
+    public int score = 0;
     public TextMeshPro text;
 
     private List<GameObject> list = new List<GameObject>();
+    private List<Vector3> scales = new List<Vector3>();
     private void genFruit()
     {
         float res = Random.value;
@@ -31,13 +37,20 @@ public class Gameplay : MonoBehaviour
     private void Start()
     {
         genFruit();
+        scales.Add(id1.GetComponent<Transform>().localScale);
+        scales.Add(id2.GetComponent<Transform>().localScale);
+        scales.Add(id3.GetComponent<Transform>().localScale);
     }
     private void OnCleeck()
     {
+        if (totalPriority == 0)
+        {
+            startScreen.GetComponent<SpriteRenderer>().enabled = false;
+            scoreResult.SetActive(false);
+            scoreTitle.SetActive(false);
+        }
         Destroy(preview);
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-       // mousePos.x -= Screen.width / 2.0f;
-       // mousePos.y-= Screen.height / 2.0f;
 
         float minX = -3.24f+(objToDrop==1?id1.gameObject.GetComponent<Transform>().localScale.x/4.0f
             : objToDrop == 2? id2.gameObject.GetComponent<Transform>().localScale.x / 4.0f
@@ -90,36 +103,84 @@ public class Gameplay : MonoBehaviour
 
         text.colorGradient = new VertexGradient(x1, x2, x3, x4);
     }
-    private void Update()
+    private void Previews()
     {
-        if(counter<cooldown)counter += Time.deltaTime;
+        if (totalPriority == 0)
+        {
+            preview = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(0, 4.0f, 0f), Quaternion.identity); // FIX positions, scale
+            preview.GetComponent<Rigidbody2D>().gravityScale = 0f;
+            preview.GetComponent<Transform>().localScale = scales[preview.GetComponent<Fruit>().id - 1];
+            genFruit();
+            preview2 = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(2.8f, 4.6f, 0f), Quaternion.identity);
+            preview2.GetComponent<Transform>().localScale = new Vector3(0.18f, 0.18f, 0.18f);
+            if (objToDrop == 3) preview2.GetComponent<Transform>().localScale = new Vector3(0.36f, 0.36f, 0.36f);
+            preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
+            preview2.GetComponent<Collider2D>().isTrigger = true;
+            return;
+        }
+        preview = preview2;
+        preview.GetComponent<Transform>().localScale = scales[preview.GetComponent<Fruit>().id - 1];
+        preview.GetComponent<Transform>().position = new Vector3(0, 4.0f, 0f);
+        preview.GetComponent<Collider2D>().isTrigger = false;
 
+        preview2 = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(2.8f, 4.6f, 0f), Quaternion.identity);
+        preview2.GetComponent<Transform>().localScale = new Vector3(0.18f, 0.18f, 0.18f);
+        if (objToDrop == 3) preview2.GetComponent<Transform>().localScale = new Vector3(0.36f, 0.36f, 0.36f);
+        preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
+        preview2.GetComponent<Collider2D>().isTrigger = true;
+    }
+    
+    public void AddObj(GameObject input)
+    {
+        list.Add(input);
+    }
+     private void Keybinds()
+     {
         if (Input.GetMouseButtonDown(0) && counter >= cooldown)
         {
             OnCleeck();
         }
-
-        if(preview == null && counter >= cooldown)
+        if (Input.GetKeyDown(KeyCode.R))
         {
-            if (totalPriority == 0)
+            if (scoreResult.activeSelf) return;
+            GameOver();
+        }
+    }
+    private void GameOver()
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] != null)
             {
-                preview = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(0, 3.0f, 0f), Quaternion.identity); // FIX positions, scale
-                preview.GetComponent<Rigidbody2D>().gravityScale = 0f;
-                genFruit();
-                preview2 = Instantiate(objToDrop == 1 ? id1 : objToDrop == 2 ? id2 : id3, new Vector3(3f, 4.5f, 0f), Quaternion.identity);
-                preview2.GetComponent<Transform>().localScale.Scale(new Vector3(0.01f,0.01f,0.01f));
-                preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
-                return;
+                list[i].GetComponentInChildren<ParticleSystem>().Play();
+                Destroy(list[i].gameObject, 0.3f);
             }
-            preview = preview2;
-            preview.GetComponent<Transform>().localScale = new Vector3(preview.GetComponent<Transform>().localScale.x*1f/0.75f, preview.GetComponent<Transform>().localScale.x * 1f / 0.75f, preview.GetComponent<Transform>().localScale.x * 1f / 0.75f);
-            preview.GetComponent<Transform>().position = new Vector3(0, 3.0f, 0f);
+        }
+        scoreResult.GetComponent<TextMeshPro>().text = score.ToString();
+        scoreResult.SetActive(true);
+        scoreTitle.SetActive(true);
+        startScreen.GetComponent<SpriteRenderer>().enabled = true;
+        list.Clear();
+        totalPriority = 0;
+        score = 0;
+        gameOver.Play();
+    }
 
-            preview2 = Instantiate(objToDrop==1?id1:objToDrop==2?id2:id3, new Vector3(3,4.5f,0f), Quaternion.identity);
-            preview2.GetComponent<Rigidbody2D>().gravityScale = 0f;
-            preview2.GetComponent<Transform>().localScale = new Vector3(preview2.GetComponent<Transform>().localScale.x*0.75f, preview2.GetComponent<Transform>().localScale.x * 0.75f, preview2.GetComponent<Transform>().localScale.x * 0.75f);
+    private void DisplayScore()
+    {
+        text.text = score.ToString();
+    }
+    private void Update()
+    {
+        if(counter<cooldown)counter += Time.deltaTime;
+
+        if (preview == null && counter >= cooldown)
+        {
+            Previews();
         }
 
         ShiftHues();
+        Keybinds();
+        DisplayScore();
     }
 }
